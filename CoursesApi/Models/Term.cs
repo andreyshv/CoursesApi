@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
+using System.Linq.Expressions;
 
 namespace CoursesApi.Models
 {
@@ -9,70 +11,69 @@ namespace CoursesApi.Models
     public class Term : IValidatableObject
     {
         private int _holidays;
+        private DateTime _endDate;
 
         public enum TermType { Course, Holiday}
 
         public long Id { get; set; }
         
         [DataType(DataType.Date)]
-        //?[Column(TypeName = "date")]
         public DateTime StartDate { get; set; }
         
         [DataType(DataType.Date)]
-        //?[Column(TypeName = "date")]
-        public DateTime EndDate { get; set; }
+        public DateTime EndDate 
+        { 
+            get { return _endDate.AddDays(Holidays); } 
+            set { _endDate = value; } 
+        }
         
         public TermType Type { get; set; }
 
         public long StudentId { get; set; }
 
-        public int Holidays { 
-            get => _holidays;
-            set 
-            {
-                if (_holidays < 0)
-                {
-                    throw new InvalidOperationException($"{nameof(Holidays)} should get a positive value");
-                }
+        public int Holidays { get => _holidays; }
 
-                if (_holidays != value)
-                {
+        public void SetHolidays(int days)
+        {
+            Debug.Assert(days >= 0 && days % 7 == 0);
+            Debug.Assert(Type == TermType.Course);
 
-                } 
-            } 
+            _holidays = days;
         }
 
-        public void RemoveHolidays()
+        public int TuitionWeeks
         {
-            if (Type != TermType.Course)
-            {
-                throw new InvalidOperationException();
-            }
-
-            Holidays = 0;
+            get => (Type == TermType.Course) 
+                ? (int)Math.Ceiling((EndDate - StartDate).Days / 7.0) - Holidays / 7 
+                : 0;
         }
 
-        public void AddHolidays(Term term)
+        public int Intersect(DateTime start, DateTime end)
         {
-            if (Type != TermType.Course
-                || term.Type != TermType.Holiday)
-            {
-                throw new InvalidOperationException();
-            }
-
             // start date of intersection
-            var startDate = (StartDate > term.StartDate) ? StartDate : term.StartDate;
+            if (StartDate > start) {
+                start = StartDate;
+            }
             // end date of intersection
-            var endDate = (EndDate < term.EndDate) ? EndDate : term.EndDate;
-            int holidays = (endDate - startDate).Days;
-            // round days to whole week
-            holidays = (int)Math.Ceiling(holidays / 7.0) * 7;
-
-            if (holidays < Weeks())
-            {
-                throw new InvalidOperationException($"{nameof(Holidays)} excieds ");
+            if (EndDate < end) {
+                end = EndDate;
+            }
+            
+            if (end <= start) {
+                return 0;
             }
 
+            int holidays = (end - start).Days;
+            
+            // round days to whole week
+            return (int)Math.Ceiling(holidays / 7.0) * 7;
+        }
+
+        public static Expression<Func<Term, bool>> FilterByDate(Term h)
+        {
+            return c => 
+                (c.StartDate >= h.StartDate && c.StartDate <= h.EndDate)
+                || (c.EndDate >= h.StartDate && c.EndDate <= h.EndDate);
         }
 
         public bool IsOverlapped(Term course)
@@ -80,11 +81,6 @@ namespace CoursesApi.Models
 
         public bool InRange(DateTime date)
             => StartDate >= date && EndDate <= date;
-
-        public int Weeks()
-        {
-            return (int)(((EndDate - StartDate).TotalDays + 3) / 7);
-        }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {

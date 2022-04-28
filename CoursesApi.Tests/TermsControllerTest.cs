@@ -10,17 +10,17 @@ using Xunit;
 
 namespace CoursesApi.Tests
 {
-    public class TermsControllerTest : IClassFixture<TestDatabaseFixture>
+    public class TermsControllerTest : IClassFixture<TestFixture>
     {
-        public TestDatabaseFixture Fixture { get; }
+        public TestFixture Fixture { get; }
 
-        public TermsControllerTest(TestDatabaseFixture fixture)
+        public TermsControllerTest(TestFixture fixture)
         {
             Fixture = fixture;
         }
 
         [Fact]
-        public async void GetCourses()
+        public async Task GetCourses()
         {
             using var context = Fixture.CreateContext();
             var controller = new TermsController(context);
@@ -36,14 +36,14 @@ namespace CoursesApi.Tests
         }
 
         [Fact]
-        public async void GetCourse()
+        public async Task GetCourse()
         {
             using var context = Fixture.CreateContext();
             var controller = new TermsController(context);
 
             var refItem = context.Terms.First();
 
-            var result = await controller.GetTerms(refItem.Id);
+            var result = await controller.GetTerm(refItem.Id);
 
             var actionResult = Assert.IsType<ActionResult<Term>>(result);
             var item = Assert.IsType<Term>(actionResult.Value);
@@ -52,19 +52,19 @@ namespace CoursesApi.Tests
         }
 
         [Fact]
-        public async void GetStudent_NotFound()
+        public async Task GetStudent_NotFound()
         {
             using var context = Fixture.CreateContext();
             var controller = new TermsController(context);
 
-            var result = await controller.GetCourse(99999);
+            var result = await controller.GetTerm(99999);
 
             var actionResult = Assert.IsType<ActionResult<Term>>(result);
             Assert.IsType<NotFoundResult>(actionResult.Result);
         }
 
         [Fact]
-        public async void AddCourse()
+        public async Task AddCourse()
         {
             using var context = Fixture.CreateContext();
             context.Database.BeginTransaction();
@@ -91,5 +91,53 @@ namespace CoursesApi.Tests
             Assert.Equal(refItem.StudentId, item?.StudentId);
             Assert.Equal(refItem.StartDate, item?.StartDate);
         }
+
+        [Theory]
+        [ClassData(typeof(HolidayData))]
+        public async Task AddHoliday(Term term, int refHolidays)
+        {
+            using var context = Fixture.CreateContext();
+            context.Database.BeginTransaction();
+
+            var controller = new TermsController(context);
+
+            var studentId = context.Students.First().Id;
+            term.StudentId = studentId;
+
+            var courses = context.Courses
+                .Where(c => c.StudentId == studentId);
+
+            int refValue = courses
+                .AsEnumerable()
+                .Select(c => c.TuitionWeeks)
+                .Sum();
+
+            Assert.True(refValue > 0);
+
+            var result = await controller.PostTerm(term);
+
+            var actionResult = Assert.IsType<ActionResult<Term>>(result);
+            var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
+            Assert.IsType<Term>(createdAtActionResult.Value);
+
+            context.ChangeTracker.Clear();
+
+            int value = courses
+                .AsEnumerable()
+                .Select(c => c.TuitionWeeks)
+                .Sum();
+
+            Assert.Equal(refValue, value);
+            
+            int holidays = context.Courses
+                .AsEnumerable()
+                .Select(c => c.Holidays)
+                .Sum();
+
+            Assert.Equal(refHolidays, holidays);
+        }
+
+        // todo: test holiday term change and delete
+
     }
 }

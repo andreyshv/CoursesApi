@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CoursesApi.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace CoursesApi.Controllers
 {
@@ -56,6 +57,8 @@ namespace CoursesApi.Controllers
                 return BadRequest();
             }
 
+            await UpdateCourses(term);
+
             _context.Entry(term).State = EntityState.Modified;
 
             try
@@ -64,7 +67,7 @@ namespace CoursesApi.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!CourseTerm(id))
+                if (!await TermExists(id))
                 {
                     return NotFound();
                 }
@@ -89,7 +92,7 @@ namespace CoursesApi.Controllers
 
             _context.Terms.Add(term);
 
-            UpdateActualEndDate(term);
+            await UpdateCourses(term);
 
             await _context.SaveChangesAsync();
 
@@ -107,40 +110,103 @@ namespace CoursesApi.Controllers
             }
 
             _context.Terms.Remove(course);
+
+            await UpdateCourses(course, true);
+
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool CourseTerm(long id)
+        private async Task<bool> TermExists(long id)
         {
-            return _context.Terms.Any(e => e.Id == id);
+            return await _context.Terms.AnyAsync(e => e.Id == id);
         }
 
-        private async void UpdateActualEndDate(Term term)
+        private async Task<List<Term>> GetAffectedCourses(Term holiday, bool deleted)
         {
+            IQueryable<Term> affected = null;
+
+            // get courses intersected with new holiday term
+            if (!deleted)
+            {
+                affected = _context.Courses
+                    .Where(Term.FilterByDate(holiday));
+            }
+
+            if (holiday.Id != 0)
+            {
+                // get saved holiday term by Id
+                // and select courses intersected with the holiday
+                var query =
+                    from h in _context.Terms.Where(h => h.Id == holiday.Id)
+                    from c in _context.Courses.Where(Term.FilterByDate(h))
+                    select c;
+
+                // get united courses query
+                if (affected == null)
+                {
+                    affected = query;
+                }
+                else
+                {
+                    affected = affected.Union(query.AsEnumerable());
+                }
+            }
+
+            return await affected.ToListAsync();
+        }
+
+        private async Task UpdateCourseHolidays(Term course, Term holiday = null)
+        {
+            Debug.Assert(course.Type == Term.TermType.Course);
+
+            // find holidays that affects the course
+            var ranges = await _context.Holidays
+                .Where(Term.FilterByDate(course))
+                .Select(h => new { h.StartDate, h.EndDate })
+                .ToListAsync();
+
+            if (holiday != null && holiday.Id == 0)
+            {
+                // new holiday term
+                ranges.Add(new { holiday.StartDate, holiday.EndDate });
+            }
+
+            int holidays = ranges
+                .Select(r => course.Intersect(r.StartDate, r.EndDate))
+                .Sum();
+
+            course.SetHolidays(holidays);
+        }
+
+        private async Task UpdateCourses(Term term, bool deleted = false)
+        {
+            //await _context.SaveChangesAsync();
+
             if (term.Type == Term.TermType.Holiday)
             {
+                // holiday added, changed or deleted
 
-                var overlapped = await _context.Terms.Where(c =>
-                    c.Type == Term.TermType.Course
-                    && ((c.StartDate >= term.StartDate && c.StartDate <= term.EndDate)
-                        || (c.EndDate >= term.StartDate && c.EndDate <= term.EndDate)))
-                    .ToArrayAsync();
-
-                foreach (var course in overlapped)
+                // get all courses affected by holiday
+                foreach (var course in await GetAffectedCourses(term, deleted))
                 {
-                    course.Holidays = 
+                    await UpdateCourseHolidays(course, term);
                 }
+            } 
+            else if (!deleted)
+            {
+                // course added or changed
+
+                await UpdateCourseHolidays(term);
             }
         }
 
         private async Task<bool> IsTermValid(Term term)
         {
-            bool isOverlapped = await _context.Terms.AnyAsync(c =>
-                c.Type == term.Type
-                && ((c.StartDate >= term.StartDate && c.StartDate <= term.EndDate)
-                    || (c.EndDate >= term.StartDate && c.EndDate <= term.EndDate)));
+            bool isOverlapped = await _context.Terms
+                .Where(c => c.Type == term.Type)
+                .AnyAsync(Term.FilterByDate(term));
 
             if (isOverlapped)
             {

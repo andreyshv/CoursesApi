@@ -73,6 +73,8 @@ namespace CoursesApi.IntegrationTests
 
             context.AddRange(Students);
 
+            context.SaveChanges();
+
             var id = Students[0].Id;
 
             Courses = new List<Term>()

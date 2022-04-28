@@ -28,7 +28,7 @@ namespace CoursesApi.IntegrationTests
         }
 
         [Fact]
-        public async void GetStudents()
+        public async Task GetStudents()
         {
             var response = await Client.GetAsync("/api/Students");
 
@@ -42,7 +42,7 @@ namespace CoursesApi.IntegrationTests
         }
 
         [Fact]
-        public async void PostStudent_ValidationFailed()
+        public async Task PostStudent_ValidationFailed()
         {
             var item = new Student
             {
@@ -65,12 +65,12 @@ namespace CoursesApi.IntegrationTests
 
         [Theory]
         [ClassData(typeof(CoursesInvalidData))]
-        public async void PostCourse_ValidationFailed(Term course, string fieldName)
+        public async Task PostCourse_ValidationFailed(Term course, string fieldName)
         {
             //context.Database.BeginTransaction();
             course.StudentId = Factory.Students[0].Id;
 
-            var response = await Client.PostAsync($"/api/Courses", Helper.GetStringContent(course));
+            var response = await Client.PostAsync($"/api/Terms", Helper.GetStringContent(course));
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
             var stringResult = await response.Content.ReadAsStringAsync();

@@ -3,21 +3,22 @@ using CoursesApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace CoursesApi.Tests
 {
-    public class StudentsControllerTests : IClassFixture<TestDatabaseFixture>
+    public class StudentsControllerTests : IClassFixture<TestFixture>
     {
-        public TestDatabaseFixture Fixture { get; }
+        public TestFixture Fixture { get; }
 
-        public StudentsControllerTests(TestDatabaseFixture fixture)
+        public StudentsControllerTests(TestFixture fixture)
         {
             Fixture = fixture;
         }
 
         [Fact]
-        public async void GetStudents()
+        public async Task GetStudents()
         {
             using var context = Fixture.CreateContext();
             var controller = new StudentsController(context);
@@ -30,7 +31,7 @@ namespace CoursesApi.Tests
         }
 
         [Fact]
-        public async void GetStudent()
+        public async Task GetStudent()
         {
             using var context = Fixture.CreateContext();
             var controller = new StudentsController(context);
@@ -45,7 +46,7 @@ namespace CoursesApi.Tests
         }
 
         [Fact]
-        public async void GetStudent_NotFound()
+        public async Task GetStudent_NotFound()
         {
             using var context = Fixture.CreateContext();
             var controller = new StudentsController(context);
@@ -57,7 +58,7 @@ namespace CoursesApi.Tests
         }
 
         [Fact]
-        public async void PostStudent()
+        public async Task PostStudent()
         {
             using var context = Fixture.CreateContext();
             context.Database.BeginTransaction();
@@ -70,9 +71,9 @@ namespace CoursesApi.Tests
 
             var result = await controller.PostStudent(refItem);
 
-            var actionResult = Assert.IsType<ActionResult<Term>>(result);
+            var actionResult = Assert.IsType<ActionResult<Student>>(result);
             var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            Assert.IsType<Term>(createdAtActionResult.Value);
+            Assert.IsType<Student>(createdAtActionResult.Value);
 
             context.ChangeTracker.Clear();
 
@@ -81,7 +82,7 @@ namespace CoursesApi.Tests
         }
 
         [Fact]
-        public async void PutStudent()
+        public async Task PutStudent()
         {
             using var context = Fixture.CreateContext();
             context.Database.BeginTransaction();
@@ -101,7 +102,7 @@ namespace CoursesApi.Tests
         }
 
         [Fact]
-        public async void PutStudent_BadRequest()
+        public async Task PutStudent_BadRequest()
         {
             using var context = Fixture.CreateContext();
             context.Database.BeginTransaction();
@@ -117,7 +118,7 @@ namespace CoursesApi.Tests
         }
 
         [Fact]
-        public async void PutStudent_NotFound()
+        public async Task PutStudent_NotFound()
         {
             using var context = Fixture.CreateContext();
             context.Database.BeginTransaction();
@@ -137,7 +138,7 @@ namespace CoursesApi.Tests
         }
 
         [Fact]
-        public async void DeleteStudent()
+        public async Task DeleteStudent()
         {
             using var context = Fixture.CreateContext();
             context.Database.BeginTransaction();

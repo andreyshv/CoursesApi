@@ -55,7 +55,7 @@ namespace CoursesApi.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!StudentExists(id))
+                if (!await StudentExists(id))
                 {
                     return NotFound();
                 }
@@ -95,9 +95,9 @@ namespace CoursesApi.Controllers
             return NoContent();
         }
 
-        private bool StudentExists(long id)
+        private async Task<bool> StudentExists(long id)
         {
-            return _context.Students.Any(e => e.Id == id);
+            return await _context.Students.AnyAsync(e => e.Id == id);
         }
     }
 }
