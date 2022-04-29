@@ -20,4 +20,6 @@
 	<ItemGroup>
 		<InternalsVisibleTo Include="CoursesApi.IntegrationTests" />
 	</ItemGroup>
+
+	<ProjectExtensions><VisualStudio><UserProperties properties_4launchsettings_1json__JsonSchema="https://cdn.jsdelivr.net/gh/tarampampam/error-pages@latest/schemas/config/1.0.schema.json" /></VisualStudio></ProjectExtensions>
 </Project>

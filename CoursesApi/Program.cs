@@ -3,6 +3,20 @@ using CoursesApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+#if DEBUG
+// https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0#dp
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(
+        policy =>
+        {
+            policy.WithOrigins("https://localhost:7158",
+                                "https://localhost:44490");
+        });
+});
+#endif
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -17,6 +31,10 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
+
+#if DEBUG
+app.UseCors();
+#endif
 
 app.UseHttpsRedirection();
 
