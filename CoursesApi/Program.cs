@@ -48,6 +48,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// route to react app
+var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "index.html");
+app.MapFallbackToFile(filePath);
+
 app.Run();
 
 #pragma warning disable CA1050 // ќбъ€вите типы в пространствах имен
