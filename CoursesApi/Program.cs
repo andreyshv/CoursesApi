@@ -49,8 +49,16 @@ app.UseAuthorization();
 app.MapControllers();
 
 // route to react app
-var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "index.html");
-app.MapFallbackToFile(filePath);
+app.MapWhen(context => !context.Request.Path.StartsWithSegments("/api"),
+    configuration =>
+    { 
+        configuration.UseStaticFiles();
+        configuration.UseRouting();
+        configuration.UseEndpoints(endpoints =>
+        {
+            endpoints.MapFallbackToFile("index.html");
+        });
+    });
 
 app.Run();
 
