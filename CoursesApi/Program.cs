@@ -11,10 +11,13 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(
         policy =>
         {
-            policy.WithOrigins("https://localhost:7158",
-                                "https://localhost:44490");
+            policy.AllowAnyOrigin()
+                .AllowAnyMethod();
         });
 });
+
+builder.Services.AddSwaggerGen();
+
 #endif
 
 // Add services to the container.
@@ -30,6 +33,9 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
+
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 #if DEBUG
