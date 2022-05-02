@@ -74,7 +74,7 @@ export class Students extends Component {
   async handleRemove(id) {
     const response = await fetch(`/api/students/${id}`, { method: "DELETE" });
 
-    const students = this.state.students.filter((student) => student.id != id);
+    const students = this.state.students.filter((student) => student.id !== id);
     this.setState({ students: students });
   }
 }
