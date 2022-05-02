@@ -44,9 +44,17 @@ app.UseCors();
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
-app.MapControllers();
+// route to api
+app.MapWhen(context => context.Request.Path.StartsWithSegments("/api"),
+    configuration =>
+    {
+        configuration.UseRouting();
+        //configuration.UseAuthorization();
+        configuration.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+        });
+    });
 
 // route to react app
 app.MapWhen(context => !context.Request.Path.StartsWithSegments("/api"),
@@ -54,6 +62,7 @@ app.MapWhen(context => !context.Request.Path.StartsWithSegments("/api"),
     { 
         configuration.UseStaticFiles();
         configuration.UseRouting();
+        //configuration.UseAuthorization();
         configuration.UseEndpoints(endpoints =>
         {
             endpoints.MapFallbackToFile("index.html");
