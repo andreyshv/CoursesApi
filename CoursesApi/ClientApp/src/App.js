@@ -8,8 +8,6 @@ import { Students } from "./components/Students";
 import "./custom.css";
 
 export default class App extends Component {
-  static displayName = App.name;
-
   render() {
     return (
       <div>
@@ -36,14 +34,16 @@ function getStudent(id) {
 
 function Student() {
   let params = useParams();
+  let student = {};
   if (params.hasOwnProperty("studentId")) {
     console.log(params.studentId);
-    let student = getStudent(parseInt(params.studentId, 10));
+    student = getStudent(parseInt(params.studentId, 10));
   }
 
   return (
     <div>
       <h1>Student {params.studentId}</h1>
+      <p>Name {student.Name}</p>
       <nav>
         <Link to="/">List</Link>
       </nav>

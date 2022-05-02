@@ -1,10 +1,8 @@
 import React, { Component } from "react";
 import Button from "react-bootstrap/Button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export class Students extends Component {
-  static displayName = Students.name;
-
   constructor(props) {
     super(props);
     this.state = { students: [], loading: true };
@@ -72,7 +70,7 @@ export class Students extends Component {
   }
 
   async handleRemove(id) {
-    const response = await fetch(`/api/students/${id}`, { method: "DELETE" });
+    await fetch(`/api/students/${id}`, { method: "DELETE" });
 
     const students = this.state.students.filter((student) => student.id !== id);
     this.setState({ students: students });
