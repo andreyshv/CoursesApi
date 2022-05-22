@@ -3,24 +3,28 @@ using CoursesApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container.
+
+// The following line enables Application Insights telemetry collection.
+// https://docs.microsoft.com/en-us/azure/azure-monitor/app/asp-net-core
+builder.Services.AddApplicationInsightsTelemetry();
+
 #if DEBUG
+// for local debugging
+
 // https://docs.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0#dp
 
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
-        policy =>
-        {
-            policy.AllowAnyOrigin()
-                .AllowAnyMethod();
-        });
+        policy => policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+        );
 });
 
 builder.Services.AddSwaggerGen();
-
 #endif
-
-// Add services to the container.
 
 builder.Services.AddControllers();
 builder.Services.AddDbContext<CoursesContext>(opt =>

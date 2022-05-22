@@ -12,6 +12,8 @@
 		<SpaProxyServerUrl>https://localhost:44408</SpaProxyServerUrl>
 		<SpaProxyLaunchCommand>npm start</SpaProxyLaunchCommand>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<ApplicationInsightsResourceId>/subscriptions/852af65e-1c8f-4241-a699-8af4e397ce78/resourceGroups/myResourceGroup/providers/microsoft.insights/components/courses-01</ApplicationInsightsResourceId>
+		<UserSecretsId>5785c4f6-f91d-4351-9d3e-84c18d2e3676</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -22,6 +24,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.20.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.5" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.5">
 			<PrivateAssets>all</PrivateAssets>
