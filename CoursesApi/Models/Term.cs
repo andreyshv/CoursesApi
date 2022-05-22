@@ -6,21 +6,56 @@ using System.Linq.Expressions;
 
 namespace CoursesApi.Models
 {
+    public class TermDTO : BaseItemDTO, IValidatableObject
+    {
+        [DataType(DataType.Date)]
+        public DateTime StartDate { get; set; }
+        [DataType(DataType.Date)]
+        public DateTime EndDate { get; set; }
+        public Term.TermType Type { get; set; }
+
+        public long StudentId { get; set; }
+        public int Holidays { get; set; }
+        public int TuitionWeeks { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (EndDate <= StartDate)
+            {
+                yield return new ValidationResult(
+                    $"Incorrect {Type} duration",
+                    new[] { nameof(EndDate) });
+            }
+
+            if (StartDate.DayOfWeek != DayOfWeek.Monday)
+            {
+                yield return new ValidationResult(
+                    $"The {Type} should start on Monday",
+                    new[] { nameof(StartDate) });
+            }
+
+            if (EndDate.DayOfWeek != DayOfWeek.Friday)
+            {
+                yield return new ValidationResult(
+                    $"The {Type} should end on Friday",
+                    new[] { nameof(EndDate) });
+            }
+        }
+    }
+
     [Index(nameof(StartDate))]
     [Index(nameof(EndDate))]
-    public class Term : IValidatableObject
+    public class Term : BaseItem
     {
         private int _holidays;
         private DateTime _endDate;
 
         public enum TermType { Course, Holiday}
 
-        public long Id { get; set; }
-        
-        [DataType(DataType.Date)]
+        //[Column(TypeName = "date")]
         public DateTime StartDate { get; set; }
-        
-        [DataType(DataType.Date)]
+
+        //[Column(TypeName = "date")]
         public DateTime EndDate 
         { 
             get { return _endDate.AddDays(Holidays); } 
@@ -46,6 +81,34 @@ namespace CoursesApi.Models
             get => (Type == TermType.Course) 
                 ? (int)Math.Ceiling((EndDate - StartDate).Days / 7.0) - Holidays / 7 
                 : 0;
+        }
+        public Term() { }
+
+        public Term(TermDTO dto)
+        {
+            StartDate = dto.StartDate;
+            EndDate = dto.EndDate;
+            StudentId = dto.StudentId;
+            Type = dto.Type;
+        }
+
+        public TermDTO ToDTO()
+        {
+            TermDTO dto = new()
+            {
+                StartDate = StartDate,
+                EndDate = EndDate,
+                StudentId = StudentId,
+
+                // Read Only
+                Id = Id,
+                Version = Version,
+                Type = Type,
+                Holidays = Holidays,
+                TuitionWeeks = TuitionWeeks
+            };
+
+            return dto;
         }
 
         public int Intersect(DateTime start, DateTime end)
@@ -81,29 +144,5 @@ namespace CoursesApi.Models
 
         public bool InRange(DateTime date)
             => StartDate >= date && EndDate <= date;
-
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            if (EndDate <= StartDate)
-            {
-                yield return new ValidationResult(
-                    $"Incorrect {Type} duration", 
-                    new [] { nameof(EndDate) });
-            }
-
-            if (StartDate.DayOfWeek != DayOfWeek.Monday)
-            {
-                yield return new ValidationResult(
-                    $"The {Type} should start on Monday",
-                    new[] { nameof(StartDate) });
-            }
-
-            if (EndDate.DayOfWeek != DayOfWeek.Friday)
-            {
-                yield return new ValidationResult(
-                    $"The {Type} should end on Friday",
-                    new[] { nameof(EndDate) });
-            }
-        }
     }
 }

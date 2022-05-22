@@ -25,8 +25,8 @@ namespace CoursesApi.Tests
 
             var result = await controller.GetStudents();
 
-            var actionResult = Assert.IsType<ActionResult<IEnumerable<Student>>>(result);
-            var returnValue = Assert.IsAssignableFrom<IEnumerable<Student>>(actionResult.Value);
+            var actionResult = Assert.IsType<ActionResult<IEnumerable<StudentDTO>>>(result);
+            var returnValue = Assert.IsAssignableFrom<IEnumerable<StudentDTO>>(actionResult.Value);
             Assert.Equal(context.Students.Count(), returnValue?.Count() ?? 0);
         }
 
@@ -40,8 +40,8 @@ namespace CoursesApi.Tests
 
             var result = await controller.GetStudent(refItem.Id);
             
-            var actionResult = Assert.IsType<ActionResult<Student>>(result);
-            var item = Assert.IsType<Student>(actionResult.Value);
+            var actionResult = Assert.IsType<ActionResult<StudentDTO>>(result);
+            var item = Assert.IsType<StudentDTO>(actionResult.Value);
             Assert.Equal(refItem.FullName, item?.FullName);
         }
 
@@ -53,7 +53,7 @@ namespace CoursesApi.Tests
 
             var result = await controller.GetStudent(99999);
 
-            var actionResult = Assert.IsType<ActionResult<Student>>(result);
+            var actionResult = Assert.IsType<ActionResult<StudentDTO>>(result);
             Assert.IsType<NotFoundResult>(actionResult.Result); 
         }
 
@@ -64,20 +64,19 @@ namespace CoursesApi.Tests
             context.Database.BeginTransaction();
 
             var controller = new StudentsController(context);
-            var refItem = new Student { 
+            var refItem = new StudentDTO { 
                 FullName = "Student N", 
                 Email = "N@contoso.com"
             };
 
             var result = await controller.PostStudent(refItem);
 
-            var actionResult = Assert.IsType<ActionResult<Student>>(result);
+            var actionResult = Assert.IsType<ActionResult<StudentDTO>>(result);
             var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            Assert.IsType<Student>(createdAtActionResult.Value);
+            var item = Assert.IsType<StudentDTO>(createdAtActionResult.Value);
 
             context.ChangeTracker.Clear();
 
-            var item = context.Students.SingleOrDefault(s => s.Id == refItem.Id);
             Assert.Equal(refItem.FullName, item?.FullName);
         }
 
@@ -93,7 +92,7 @@ namespace CoursesApi.Tests
             var refItem = context.Students.First();
             refItem.FullName = "Student X";
 
-            await controller.PutStudent(refItem.Id, refItem);
+            await controller.PutStudent(refItem.Id, refItem.ToDTO());
 
             context.ChangeTracker.Clear();
 
@@ -112,7 +111,7 @@ namespace CoursesApi.Tests
             var refItem = context.Students.First();
             refItem.FullName = "Student X";
 
-            var result = await controller.PutStudent(refItem.Id + 1, refItem);
+            var result = await controller.PutStudent(refItem.Id + 1, refItem.ToDTO());
 
             Assert.IsType<BadRequestResult>(result);
         }
@@ -125,14 +124,14 @@ namespace CoursesApi.Tests
 
             var controller = new StudentsController(context);
 
-            var refItem = new Student
+            var refItem = new StudentDTO
             {
                 Id = 9999,
                 FullName = "A",
                 Email = "A@contoso.com"
             };
 
-            var result = await controller.PutStudent(refItem.Id, refItem);
+            var result = await controller.PutStudent(9999, refItem);
 
             Assert.IsType<NotFoundResult>(result);
         }

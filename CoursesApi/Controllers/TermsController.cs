@@ -25,41 +25,50 @@ namespace CoursesApi.Controllers
 
         // GET: api/Terms
         [HttpGet("{StudentId}")]
-        public async Task<ActionResult<IEnumerable<Term>>> GetTerms(long StudentId)
+        public async Task<ActionResult<IEnumerable<TermDTO>>> GetTerms(long StudentId)
         {
             return await _context.Terms
                 .Where(c => c.StudentId == StudentId)
                 .OrderBy(t => t.StartDate)
+                .AsAsyncEnumerable()
+                .Select(t => t.ToDTO())
                 .ToListAsync();
         }
 
         // GET: api/Terms/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Term>> GetTerm(long id)
+        public async Task<ActionResult<TermDTO>> GetTerm(long id)
         {
-            var course = await _context.Terms.FindAsync(id);
+            var term = await _context.Terms.FindAsync(id);
 
-            if (course == null)
+            if (term == null)
             {
                 return NotFound();
             }
 
-            return course;
+            return term.ToDTO();
         }
 
         // PUT: api/Terms/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutTerm(long id, Term term)
+        public async Task<IActionResult> PutTerm(long id, TermDTO termDTO)
         {
-            if (id != term.Id)
+            if (termDTO.Id != id)
             {
                 return BadRequest();
             }
 
-            await UpdateCourses(term);
+            var term = await _context.Terms.FindAsync(id);
+            if (term == null)
+            {
+                return NotFound();
+            }
 
-            _context.Entry(term).State = EntityState.Modified;
+            //_context.Update(term);
+            _context.Entry(term).CurrentValues.SetValues(termDTO);
+
+            await UpdateCourses(term);
 
             try
             {
@@ -67,14 +76,10 @@ namespace CoursesApi.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await TermExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                //TODO: fix concurrency error
+                //return Conflict(ModelState);
+                
+                throw;
             }
 
             return NoContent();
@@ -83,8 +88,10 @@ namespace CoursesApi.Controllers
         // POST: api/Term
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Term>> PostTerm(Term term)
+        public async Task<ActionResult<TermDTO>> PostTerm(TermDTO termDTO)
         {
+            Term term = new(termDTO);
+
             if (!await IsTermValid(term))
             {
                 return BadRequest(ModelState);
@@ -96,7 +103,7 @@ namespace CoursesApi.Controllers
 
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetTerm), new { id = term.Id }, term);
+            return CreatedAtAction(nameof(GetTerm), new { id = term.Id }, term.ToDTO());
         }
 
         // DELETE: api/Terms/5
@@ -109,6 +116,7 @@ namespace CoursesApi.Controllers
                 return NotFound();
             }
 
+            // todo: check version
             _context.Terms.Remove(course);
 
             await UpdateCourses(course, true);
@@ -116,11 +124,6 @@ namespace CoursesApi.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private async Task<bool> TermExists(long id)
-        {
-            return await _context.Terms.AnyAsync(e => e.Id == id);
         }
 
         private async Task<List<Term>> GetAffectedCourses(Term holiday, bool deleted)
@@ -182,8 +185,6 @@ namespace CoursesApi.Controllers
 
         private async Task UpdateCourses(Term term, bool deleted = false)
         {
-            //await _context.SaveChangesAsync();
-
             if (term.Type == Term.TermType.Holiday)
             {
                 // holiday added, changed or deleted

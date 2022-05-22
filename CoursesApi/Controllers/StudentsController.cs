@@ -18,14 +18,17 @@ namespace CoursesApi.Controllers
 
         // GET: api/Students
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Student>>> GetStudents()
+        public async Task<ActionResult<IEnumerable<StudentDTO>>> GetStudents()
         {
-            return await _context.Students.ToListAsync();
+            return await _context.Students
+                .ToAsyncEnumerable()
+                .Select(student => student.ToDTO())
+                .ToListAsync();
         }
 
         // GET: api/Students/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Student>> GetStudent(long id)
+        public async Task<ActionResult<StudentDTO>> GetStudent(long id)
         {
             var student = await _context.Students.FindAsync(id);
 
@@ -34,35 +37,39 @@ namespace CoursesApi.Controllers
                 return NotFound();
             }
 
-            return student;
+            return student.ToDTO();
         }
 
         // PUT: api/Students/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutStudent(long id, Student student)
+        public async Task<IActionResult> PutStudent(long id, StudentDTO studentDTO)
         {
-            if (id != student.Id)
+            if (studentDTO.Id != id)
             {
                 return BadRequest();
             }
 
-            _context.MarkAsModified(student);
-            
+            var student = await _context.Students.FindAsync(id);
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            //_context.Update(student);
+            _context.Entry(student).CurrentValues.SetValues(studentDTO);
+
             try
             {
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await StudentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                // TODO: councurrency error
+                // ETag + If-Match or ef Timestamp
+                //return Conflict(ModelState);
+
+                throw;
             }
 
             return NoContent();
@@ -71,12 +78,14 @@ namespace CoursesApi.Controllers
         // POST: api/Students
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Student>> PostStudent(Student student)
+        public async Task<ActionResult<StudentDTO>> PostStudent(StudentDTO studentDTO)
         {
+            Student student = new(studentDTO);
+
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetStudent), new { id = student.Id }, student);
+            return CreatedAtAction(nameof(GetStudent), new { id = student.Id }, student.ToDTO());
         }
 
         // DELETE: api/Students/5
@@ -89,15 +98,11 @@ namespace CoursesApi.Controllers
                 return NotFound();
             }
 
+            // todo: check version
             _context.Students.Remove(student);
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private async Task<bool> StudentExists(long id)
-        {
-            return await _context.Students.AnyAsync(e => e.Id == id);
         }
     }
 }

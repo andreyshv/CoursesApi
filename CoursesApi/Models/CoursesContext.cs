@@ -47,10 +47,5 @@ namespace CoursesApi.Models
             Terms.Where(h => h.Type == Term.TermType.Course);
         public IQueryable<Term> Holidays =>
             Terms.Where(h => h.Type == Term.TermType.Holiday);
-
-        public void MarkAsModified<TEntity>(TEntity item)
-        {
-            Entry(item!).State = EntityState.Modified;
-        }
     }
 }

@@ -67,13 +67,13 @@ namespace CoursesApi.Tests
         {
             yield return new object[]
             {
-                new Term { StartDate = new DateTime(2022, 4, 4), EndDate = new DateTime(2022, 4, 8), Type = Term.TermType.Holiday },
+                new TermDTO { StartDate = new DateTime(2022, 4, 4), EndDate = new DateTime(2022, 4, 8), Type = Term.TermType.Holiday },
                 7
             };
 
             yield return new object[]
             {
-                new Term { StartDate = new DateTime(2022, 4, 18), EndDate = new DateTime(2022, 4, 29), Type = Term.TermType.Holiday },
+                new TermDTO { StartDate = new DateTime(2022, 4, 18), EndDate = new DateTime(2022, 4, 29), Type = Term.TermType.Holiday },
                 7
             };
         }

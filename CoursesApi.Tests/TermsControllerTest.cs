@@ -30,8 +30,8 @@ namespace CoursesApi.Tests
 
             var result = await controller.GetTerms(studentId);
 
-            var actionResult = Assert.IsType<ActionResult<IEnumerable<Term>>>(result);
-            var returnValue = Assert.IsAssignableFrom<IEnumerable<Term>>(actionResult.Value);
+            var actionResult = Assert.IsType<ActionResult<IEnumerable<TermDTO>>>(result);
+            var returnValue = Assert.IsAssignableFrom<IEnumerable<TermDTO>>(actionResult.Value);
             Assert.Equal(count, returnValue?.Count() ?? 0);
         }
 
@@ -45,8 +45,9 @@ namespace CoursesApi.Tests
 
             var result = await controller.GetTerm(refItem.Id);
 
-            var actionResult = Assert.IsType<ActionResult<Term>>(result);
-            var item = Assert.IsType<Term>(actionResult.Value);
+            var actionResult = Assert.IsType<ActionResult<TermDTO>>(result);
+            var item = Assert.IsType<TermDTO>(actionResult.Value);
+
             Assert.Equal(refItem.StudentId, item?.StudentId);
             Assert.Equal(refItem.StartDate, item?.StartDate);
         }
@@ -59,7 +60,7 @@ namespace CoursesApi.Tests
 
             var result = await controller.GetTerm(99999);
 
-            var actionResult = Assert.IsType<ActionResult<Term>>(result);
+            var actionResult = Assert.IsType<ActionResult<TermDTO>>(result);
             Assert.IsType<NotFoundResult>(actionResult.Result);
         }
 
@@ -72,7 +73,7 @@ namespace CoursesApi.Tests
             var controller = new TermsController(context);
 
             var studentId = context.Students.First().Id;
-            var refItem = new Term
+            var refItem = new TermDTO
             {
                 StudentId = studentId,
                 StartDate = new DateTime(2022, 4, 25),
@@ -81,20 +82,20 @@ namespace CoursesApi.Tests
 
             var result = await controller.PostTerm(refItem);
             
-            var actionResult = Assert.IsType<ActionResult<Term>>(result);
+            var actionResult = Assert.IsType<ActionResult<TermDTO>>(result);
             var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            Assert.IsType<Term>(createdAtActionResult.Value);
+            var item = Assert.IsType<TermDTO>(createdAtActionResult.Value);
 
             context.ChangeTracker.Clear();
 
-            var item = context.Terms.SingleOrDefault(c => c.Id == refItem.Id);
-            Assert.Equal(refItem.StudentId, item?.StudentId);
-            Assert.Equal(refItem.StartDate, item?.StartDate);
+            Assert.Equal(refItem.StudentId, item.StudentId);
+            Assert.Equal(refItem.StartDate, item.StartDate);
+            Assert.Equal(refItem.EndDate, item.EndDate);
         }
 
         [Theory]
         [ClassData(typeof(HolidayData))]
-        public async Task AddHoliday(Term term, int refHolidays)
+        public async Task AddHoliday(TermDTO term, int refHolidays)
         {
             using var context = Fixture.CreateContext();
             context.Database.BeginTransaction();
@@ -116,9 +117,9 @@ namespace CoursesApi.Tests
 
             var result = await controller.PostTerm(term);
 
-            var actionResult = Assert.IsType<ActionResult<Term>>(result);
+            var actionResult = Assert.IsType<ActionResult<TermDTO>>(result);
             var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(actionResult.Result);
-            Assert.IsType<Term>(createdAtActionResult.Value);
+            Assert.IsType<TermDTO>(createdAtActionResult.Value);
 
             context.ChangeTracker.Clear();
 

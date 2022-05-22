@@ -35,7 +35,7 @@ namespace CoursesApi.IntegrationTests
             response.EnsureSuccessStatusCode();
             
             var stringResult = await response.Content.ReadAsStringAsync();
-            Student[]? students = JsonSerializer.Deserialize<Student[]>(stringResult);
+            StudentDTO[]? students = JsonSerializer.Deserialize<StudentDTO[]>(stringResult);
             
             Assert.NotNull(students);
             Assert.Equal(Factory.Students.Count, students!.Length);
@@ -44,10 +44,11 @@ namespace CoursesApi.IntegrationTests
         [Fact]
         public async Task PostStudent_ValidationFailed()
         {
-            var item = new Student
+            var item = new StudentDTO
             {
                 FullName = "x",
-                Email = "x"
+                Email = "x",
+                Version = new byte[] { 0 }
             };
 
             //context.Database.BeginTransaction();
@@ -65,7 +66,7 @@ namespace CoursesApi.IntegrationTests
 
         [Theory]
         [ClassData(typeof(CoursesInvalidData))]
-        public async Task PostCourse_ValidationFailed(Term course, string fieldName)
+        public async Task PostCourse_ValidationFailed(TermDTO course, string fieldName)
         {
             //context.Database.BeginTransaction();
             course.StudentId = Factory.Students[0].Id;
@@ -91,25 +92,25 @@ namespace CoursesApi.IntegrationTests
             // date range
             yield return new object[]
             {
-                new Term { StartDate = new DateTime(2022, 4, 25), EndDate = new DateTime(2022, 4, 25)},
+                new TermDTO { StartDate = new DateTime(2022, 4, 25), EndDate = new DateTime(2022, 4, 25), Version = new byte[] { 0 } },
                 "EndDate"
             };
             // wrong start day
             yield return new object[]
             {
-                new Term { StartDate = new DateTime(2022, 4, 26), EndDate = new DateTime(2022, 4, 29)},
+                new TermDTO { StartDate = new DateTime(2022, 4, 26), EndDate = new DateTime(2022, 4, 29), Version = new byte[] { 0 } },
                 "StartDate"
             };
             // wrong end day
             yield return new object[]
             {
-                new Term { StartDate = new DateTime(2022, 4, 25), EndDate = new DateTime(2022, 4, 28)},
+                new TermDTO { StartDate = new DateTime(2022, 4, 25), EndDate = new DateTime(2022, 4, 28), Version = new byte[] { 0 } },
                 "EndDate"
             };
             // overlapped
             yield return new object[]
             {
-                new Term { StartDate = new DateTime(2022, 4, 11), EndDate = new DateTime(2022, 4, 15) },
+                new TermDTO { StartDate = new DateTime(2022, 4, 11), EndDate = new DateTime(2022, 4, 15), Version = new byte[] { 0 } },
                 ""
             };
         }

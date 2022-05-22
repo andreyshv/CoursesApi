@@ -67,8 +67,8 @@ namespace CoursesApi.IntegrationTests
         {
             Students = new List<Student>()
             {
-                new Student { FullName = "First Student", Email = "student1@contoso.com" },
-                new Student { FullName = "Second Student", Email = "student2@contoso.com" }
+                new Student { FullName = "First Student", Email = "student1@contoso.com", Version = new byte[] { 0 } },
+                new Student { FullName = "Second Student", Email = "student2@contoso.com", Version = new byte[] { 0 } }
             };
 
             context.AddRange(Students);
